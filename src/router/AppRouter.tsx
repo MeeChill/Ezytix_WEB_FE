@@ -1,23 +1,36 @@
-// src/router/AppRouter.tsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import { LandingPage } from "../pages/LandingPage";
+import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
 
-export const AppRouter = () => {
-    return (
-        <BrowserRouter>
-            <Routes>
+import DashboardPage from "../pages/admin/DashboardPage";
 
-                {/* DEFAULT ROUTE = LANDING PAGE */}
-                <Route path="/" element={<LandingPage />} />
+import ProtectedRoute from "./ProtectedRoute";
+import AdminRoute from "./AdminRoute";
 
-                {/* Example future routes */}
-                {/* <Route path="/login" element={<LoginPage />} /> */}
-                {/* <Route path="/pesan-tiket" element={<TicketPage />} /> */}
+export default function AppRouter() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-                {/* 404 */}
-                <Route path="*" element={<LandingPage />} />
+        {/* PROTECTED CUSTOMER / USER ROUTES */}
+        <Route element={<ProtectedRoute />}>
+          {/* (Kosong dulu, nanti ditambah profile dll) */}
+        </Route>
 
-            </Routes>
-        </BrowserRouter>
-    );
-};
+        {/* PROTECTED ADMIN ROUTES */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/dashboard" element={<DashboardPage />} />
+        </Route>
+
+        {/* FALLBACK */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
