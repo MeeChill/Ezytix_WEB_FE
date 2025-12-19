@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiCalendar, FiRefreshCw, FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { airportService } from "../../service/airportService";
+import { airportService } from "../../services/airportService";
 import { Airport } from "../../types/api";
 import { AirportCombobox } from "../ui/AirportCombobox";
 import { PassengerSelector } from "../ui/PassengerSelector";
@@ -106,7 +106,7 @@ export const SearchBox: React.FC = () => {
         const params = new URLSearchParams();
         params.append("origin", origin.id.toString());
         params.append("destination", destination.id.toString());
-        params.append("date", departureDate);
+        params.append("departure_date", departureDate);
         params.append("passengers", (adults + children).toString());
         params.append("seat_class", seatClass);
         if (isRoundTrip && returnDate) params.append("return_date", returnDate);

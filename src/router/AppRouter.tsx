@@ -8,11 +8,13 @@ import DashboardPage from "../pages/admin/DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 import AdminRoute from "./AdminRoute";
 import ProfilePage from "../pages/ProfilePage";
+import SearchResultsPage from "../pages/SearchResultsPage";
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/search" element={<SearchResultsPage />} /> {/* Route Baru */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
