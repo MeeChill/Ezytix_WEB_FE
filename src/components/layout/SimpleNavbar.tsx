@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FiChevronLeft } from "react-icons/fi";
+import ezyRed from "../../assets/images/ezyred.png";
 
 export const SimpleNavbar: React.FC = () => {
   return (
@@ -9,13 +10,14 @@ export const SimpleNavbar: React.FC = () => {
         
         {/* KIRI: Logo & Back */}
         <div className="flex items-center gap-4">
-            <Link to="/" className="text-gray-500 hover:text-gray-800 transition">
-                <FiChevronLeft size={24} />
-            </Link>
             {/* Ganti dengan Logo Image projectmu jika ada */}
-            <Link to="/" className="text-2xl font-black text-blue-600 tracking-tighter">
-                EZYTIX
-            </Link>
+            <Link to="/" className="flex items-center">
+                      <img 
+                        src={ezyRed} 
+                        alt="Ezytix Logo" 
+                        className="h-8 md:h-9 w-auto hover:opacity-80 transition" 
+                      />
+                    </Link>
         </div>
 
         {/* KANAN: Title Halaman */}

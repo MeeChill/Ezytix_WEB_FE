@@ -23,7 +23,6 @@ export const Navbar: React.FC = () => {
 
     const navItems = [
         { label: "Home", href: "/" },
-        { label: "Pesan Tiket", href: "/tiket" },
         { label: "Jadi Partner", href: "/partner" },
     ];
 

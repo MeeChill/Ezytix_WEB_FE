@@ -31,7 +31,7 @@ const BookingPage: React.FC = () => {
 
     // Mock User Data (Idealnya dari Context/Redux)
     const user = {
-        fullName: "Hilmian Arya",
+        fullName: "Hilmi Anarya",
         email: "hilmian@ezytix.com",
         phone: "+62 812 3456 7890"
     };

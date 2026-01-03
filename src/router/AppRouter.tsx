@@ -10,6 +10,7 @@ import AdminRoute from "./AdminRoute";
 import ProfilePage from "../pages/ProfilePage";
 import SearchResultsPage from "../pages/SearchResultsPage";
 import BookingPage from "../pages/BookingPage";
+import BookingSuccessPage from "../pages/BookingSuccessPage";
 
 export default function AppRouter() {
   return (
@@ -18,8 +19,8 @@ export default function AppRouter() {
       <Route path="/search" element={<SearchResultsPage />} /> {/* Route Baru */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      {/* 🔥 FIX ROUTING: Daftarkan Booking Page di sini */}
       <Route path="/booking" element={<BookingPage />} />
+      <Route path="/booking/success" element={<BookingSuccessPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/profile" element={<ProfilePage />} />
