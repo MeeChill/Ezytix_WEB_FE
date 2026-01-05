@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiCalendar, FiChevronLeft, FiChevronRight, FiChevronDown } from "react-icons/fi";
 
 interface Props {
-  label: string;
+  // Label di props dipertahankan untuk kompatibilitas, tapi tidak dirender secara visual
+  label?: string;
   selectedDate: string; // Format YYYY-MM-DD
   onChange: (date: string) => void;
   minDate?: string;     // Format YYYY-MM-DD
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export const CalendarSelector: React.FC<Props> = ({ 
-  label, selectedDate, onChange, minDate, disabled = false, className, placeholder 
+  selectedDate, onChange, minDate, disabled = false, className, placeholder 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -33,6 +34,18 @@ export const CalendarSelector: React.FC<Props> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Sync viewDate when popup opens to show selected date month or current month
+  useEffect(() => {
+     if(isOpen) {
+         if (selectedDate) {
+             setViewDate(new Date(selectedDate));
+         } else {
+             setViewDate(new Date());
+         }
+     }
+  }, [isOpen, selectedDate]);
+
+
   // Helpers
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -49,7 +62,6 @@ export const CalendarSelector: React.FC<Props> = ({
 
   const handleDateClick = (day: number) => {
     const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-    // Adjust timezone offset agar tidak geser hari saat toISOString
     const offset = newDate.getTimezoneOffset();
     const localDate = new Date(newDate.getTime() - (offset * 60 * 1000));
     
@@ -61,7 +73,6 @@ export const CalendarSelector: React.FC<Props> = ({
     if (!minDate) return false;
     const current = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
     const min = new Date(minDate);
-    // Set hours to 0 for accurate comparison
     current.setHours(0,0,0,0);
     min.setHours(0,0,0,0);
     return current < min;
@@ -78,7 +89,7 @@ export const CalendarSelector: React.FC<Props> = ({
   // Format Tampilan di Input Box
   const displayDate = selectedDate ? new Date(selectedDate).toLocaleDateString('id-ID', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-  }) : (placeholder || "-");
+  }) : (placeholder || "Pilih Tanggal");
 
   // Generate Calendar Grid
   const renderCalendarDays = () => {
@@ -101,11 +112,11 @@ export const CalendarSelector: React.FC<Props> = ({
           key={day}
           disabled={disabledDay}
           onClick={() => handleDateClick(day)}
-          className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all
+          className={`h-9 w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all
             ${selected 
-              ? 'bg-red-600 text-white shadow-md shadow-red-200' 
+              ? 'bg-red-600 text-white shadow-md shadow-red-200 transform scale-105' 
               : disabledDay 
-                ? 'text-gray-300 cursor-not-allowed' 
+                ? 'text-gray-300 cursor-not-allowed bg-gray-50' 
                 : 'text-gray-700 hover:bg-red-50 hover:text-red-600'
             }`}
         >
@@ -118,56 +129,72 @@ export const CalendarSelector: React.FC<Props> = ({
 
   return (
     <div className={`relative w-full ${className}`} ref={dropdownRef}>
-      {/* TRIGGER INPUT */}
+      
+      {/* TRIGGER INPUT (Gaya Baru: Konsisten dengan AirportCombobox) */}
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`flex items-center gap-3 bg-gray-100 px-4 py-2 rounded-xl transition h-[72px] border border-transparent
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-200'}
+        className={`
+            group flex items-center gap-3 w-full h-[54px] px-4 rounded-2xl transition-all border
+            ${disabled 
+                ? "bg-gray-100 border-gray-100 cursor-not-allowed opacity-60" 
+                : isOpen
+                    ? "bg-white border-red-500 shadow-red-100 ring-2 ring-red-100 cursor-pointer"
+                    : "bg-gray-50 border-gray-200 hover:bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer"
+            }
         `}
       >
-        <FiCalendar className={`${disabled ? 'text-gray-400' : selectedDate ? 'text-red-500' : 'text-gray-400'} text-xl flex-shrink-0`} />
-        <div className="flex flex-col w-full overflow-hidden">
-           <span className="text-xs text-gray-500 font-semibold uppercase mb-0.5">{label}</span>
-           <span className={`text-sm font-bold truncate ${disabled ? 'text-gray-400' : 'text-gray-800'}`}>
+        {/* Icon */}
+        <span className={`text-xl transition-colors ${disabled ? "text-gray-400" : isOpen || selectedDate ? "text-red-500" : "text-gray-400 group-hover:text-red-500"}`}>
+             <FiCalendar />
+        </span>
+
+        {/* Value Text (Tanpa Label Internal) */}
+        <div className="flex-1 min-w-0">
+           <p className={`text-base font-bold truncate ${selectedDate ? "text-gray-900" : "text-gray-400"}`}>
              {displayDate}
-           </span>
+           </p>
         </div>
+
+         {/* Chevron Icon */}
+         {!disabled && (
+             <FiChevronDown className={`text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+         )}
       </div>
 
       {/* DROPDOWN CONTENT */}
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 mt-2 w-[320px] bg-white rounded-xl shadow-2xl z-50 p-4 border border-gray-100 ring-1 ring-black ring-opacity-5 select-none">
+        <div className="absolute top-full left-0 mt-2 w-[340px] bg-white rounded-2xl shadow-xl z-50 p-5 border border-gray-100 ring-1 ring-black ring-opacity-5 select-none animate-in fade-in zoom-in-95 duration-200">
           
           {/* Header: Month Navigation */}
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-600">
+          <div className="flex justify-between items-center mb-5">
+            <button onClick={handlePrevMonth} className="p-2 hover:bg-red-50 rounded-full text-gray-500 hover:text-red-600 transition-colors">
               <FiChevronLeft size={20} />
             </button>
-            <span className="font-bold text-gray-800">
+            <span className="font-black text-gray-800 text-lg">
               {viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
             </span>
-            <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-600">
+            <button onClick={handleNextMonth} className="p-2 hover:bg-red-50 rounded-full text-gray-500 hover:text-red-600 transition-colors">
               <FiChevronRight size={20} />
             </button>
           </div>
 
           {/* Weekday Names */}
-          <div className="grid grid-cols-7 mb-2">
+          <div className="grid grid-cols-7 mb-3">
             {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
-              <div key={d} className="h-8 flex items-center justify-center text-xs font-bold text-gray-400">
+              <div key={d} className="h-8 flex items-center justify-center text-xs font-bold text-gray-400 uppercase tracking-wide">
                 {d}
               </div>
             ))}
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-y-1">
+          <div className="grid grid-cols-7 gap-y-1 place-items-center">
             {renderCalendarDays()}
           </div>
           
           {/* Footer Info */}
           {minDate && (
-             <div className="mt-3 pt-3 border-t border-gray-100 text-[10px] text-gray-400 text-center">
+             <div className="mt-4 pt-4 border-t border-gray-100 text-[11px] text-gray-400 text-center font-medium">
                 *Tanggal sebelum hari ini tidak tersedia
              </div>
           )}

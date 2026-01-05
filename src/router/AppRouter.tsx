@@ -11,6 +11,7 @@ import ProfilePage from "../pages/ProfilePage";
 import SearchResultsPage from "../pages/SearchResultsPage";
 import BookingPage from "../pages/BookingPage";
 import BookingSuccessPage from "../pages/BookingSuccessPage";
+import { BookingHistoryPage } from "../pages/BookingHistoryPage";
 
 export default function AppRouter() {
   return (
@@ -21,6 +22,7 @@ export default function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/booking" element={<BookingPage />} />
       <Route path="/booking/success" element={<BookingSuccessPage />} />
+      <Route path="/history" element={<BookingHistoryPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/profile" element={<ProfilePage />} />

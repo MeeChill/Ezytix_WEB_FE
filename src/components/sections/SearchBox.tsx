@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { FiSearch, FiCalendar, FiRefreshCw, FiMapPin } from "react-icons/fi";
+import { FiSearch, FiRefreshCw, FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { airportService } from "../../services/airportService";
 import { Airport } from "../../types/api";
 import { AirportCombobox } from "../ui/AirportCombobox";
 import { PassengerSelector } from "../ui/PassengerSelector";
 import { CalendarSelector } from "../ui/CalendarSelector";
+
+// --- 1. LABEL BOX (FIXED: RATA KIRI TEGAS) ---
+// Menambahkan w-full dan text-left untuk mencegah centering
+const BoxLabel: React.FC<{ label: string }> = ({ label }) => (
+    <div className="mb-2 w-full text-left pl-1">
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            {label}
+        </span>
+    </div>
+);
 
 export const SearchBox: React.FC = () => {
     const navigate = useNavigate();
@@ -19,7 +29,6 @@ export const SearchBox: React.FC = () => {
     const [origin, setOrigin] = useState<Airport | null>(null);
     const [destination, setDestination] = useState<Airport | null>(null);
     
-    // Default Tanggal: HARI INI
     const today = new Date().toISOString().split('T')[0];
     const [departureDate, setDepartureDate] = useState<string>(today);
     const [returnDate, setReturnDate] = useState<string>(""); 
@@ -29,26 +38,17 @@ export const SearchBox: React.FC = () => {
     const [infants, setInfants] = useState(0);
     const [seatClass, setSeatClass] = useState("economy");
 
-    // --- FETCH DATA & AUTO SELECT (SAT-SET LOGIC) ---
+    // FETCH DATA
     useEffect(() => {
         const fetchAirports = async () => {
             try {
                 const data = await airportService.getAirports();
                 setAirports(data);
-
-                // --- LOGIC SAT-SET ---
                 if (data.length > 0) {
-                    // 1. Cari Jakarta (CGK) sebagai Default Origin
                     const defaultOrigin = data.find(a => a.code === 'CGK') || data[0];
                     setOrigin(defaultOrigin);
-
-                    // 2. Cari Bali (DPS) sebagai Default Destination
-                    // Jika DPS gak ada, ambil bandara kedua di list (asal bukan origin)
                     const defaultDest = data.find(a => a.code === 'DPS') || data.find(a => a.id !== defaultOrigin.id);
-                    
-                    if (defaultDest) {
-                        setDestination(defaultDest);
-                    }
+                    if (defaultDest) setDestination(defaultDest);
                 }
             } catch (error) {
                 console.error("Gagal load bandara", error);
@@ -59,7 +59,7 @@ export const SearchBox: React.FC = () => {
         fetchAirports();
     }, []);
 
-    // --- SMART DATE LOGIC ---
+    // DATE LOGIC
     const addDays = (dateStr: string, days: number) => {
         const result = new Date(dateStr);
         result.setDate(result.getDate() + days);
@@ -74,13 +74,7 @@ export const SearchBox: React.FC = () => {
         } else {
             setReturnDate("");
         }
-    }, [isRoundTrip]);
-
-    useEffect(() => {
-        if (isRoundTrip && returnDate && returnDate <= departureDate) {
-            setReturnDate(addDays(departureDate, 1));
-        }
-    }, [departureDate]);
+    }, [isRoundTrip, departureDate]);
 
     // HANDLERS
     const handleSwap = () => {
@@ -90,18 +84,9 @@ export const SearchBox: React.FC = () => {
     };
 
     const handleSearch = () => {
-        if (!origin || !destination) {
-            alert("Mohon pilih bandara asal dan tujuan.");
-            return;
-        }
-        if (origin.id === destination.id) {
-            alert("Bandara asal dan tujuan tidak boleh sama.");
-            return;
-        }
-        if (isRoundTrip && !returnDate) {
-            alert("Mohon pilih tanggal pulang.");
-            return;
-        }
+        if (!origin || !destination) return alert("Pilih bandara asal & tujuan");
+        if (origin.id === destination.id) return alert("Bandara tidak boleh sama");
+        if (isRoundTrip && !returnDate) return alert("Pilih tanggal pulang");
 
         const params = new URLSearchParams();
         params.append("origin", origin.id.toString());
@@ -115,68 +100,126 @@ export const SearchBox: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto bg-white shadow-xl rounded-3xl p-6 mt-8 relative z-30 border border-gray-100">
+        <div className="w-full max-w-7xl mx-auto mt-8 relative z-30 px-4 md:px-0">
             
-            {/* TRIP MODE */}
-            <div className="flex gap-6 mb-4 px-1">
-                <label className="flex items-center gap-2 cursor-pointer group select-none">
-                    <input type="radio" name="tripMode" checked={!isRoundTrip} onChange={() => setIsRoundTrip(false)} className="accent-red-500 w-4 h-4 cursor-pointer" />
-                    <span className={`text-sm font-bold transition-colors ${!isRoundTrip ? 'text-gray-900' : 'text-gray-400 group-hover:text-red-500'}`}>Sekali Jalan</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer group select-none">
-                    <input type="radio" name="tripMode" checked={isRoundTrip} onChange={() => setIsRoundTrip(true)} className="accent-red-500 w-4 h-4 cursor-pointer" />
-                    <span className={`text-sm font-bold transition-colors ${isRoundTrip ? 'text-gray-900' : 'text-gray-400 group-hover:text-red-500'}`}>Pulang Pergi</span>
-                </label>
-            </div>
-
-            {/* MAIN GRID */}
-            <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_auto_1.5fr_1.1fr_1.1fr_1.4fr_auto] gap-3 items-center">
+            {/* MAIN CARD */}
+            <div className="bg-white shadow-2xl rounded-[2rem] p-6 md:p-8 border border-gray-100">
                 
-                {/* 1. DARI (Combobox - Auto Filled) */}
-                <AirportCombobox label="Dari" airports={airports} value={origin} onChange={setOrigin} placeholder="Jakarta (JKT)" />
-
-                {/* SWAP */}
-                <div className="flex justify-center -my-2 xl:my-0 relative z-10">
-                   <button onClick={handleSwap} className="bg-gray-50 p-2 rounded-full hover:bg-red-50 hover:text-red-600 text-gray-400 transition border border-gray-200 shadow-sm">
-                       <FiRefreshCw className="text-lg" />
-                   </button>
+                {/* 1. TRIP MODE TABS */}
+                <div className="flex gap-8 mb-6 border-b border-gray-100 pb-4">
+                    <label className="flex items-center gap-3 cursor-pointer group select-none">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!isRoundTrip ? 'border-red-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                            {!isRoundTrip && <div className="w-2.5 h-2.5 bg-red-600 rounded-full" />}
+                        </div>
+                        <input type="radio" name="tripMode" checked={!isRoundTrip} onChange={() => setIsRoundTrip(false)} className="hidden" />
+                        <span className={`text-sm font-bold ${!isRoundTrip ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                            Sekali Jalan
+                        </span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer group select-none">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${isRoundTrip ? 'border-red-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                            {isRoundTrip && <div className="w-2.5 h-2.5 bg-red-600 rounded-full" />}
+                        </div>
+                        <input type="radio" name="tripMode" checked={isRoundTrip} onChange={() => setIsRoundTrip(true)} className="hidden" />
+                        <span className={`text-sm font-bold ${isRoundTrip ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'}`}>
+                            Pulang Pergi
+                        </span>
+                    </label>
                 </div>
 
-                {/* 2. KE (Combobox - Auto Filled) */}
-                <AirportCombobox label="Ke" icon={<FiMapPin className="text-blue-500 text-xl flex-shrink-0" />} airports={airports} value={destination} onChange={setDestination} placeholder="Denpasar (DPS)" />
+                {/* 2. GRID UTAMA (FIXED WIDTH / STATIS) */}
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_auto] gap-4 items-end">
+                    
+                    {/* DARI */}
+                    <div className="w-full">
+                        <BoxLabel label="Dari" />
+                        <AirportCombobox 
+                            airports={airports} 
+                            value={origin} 
+                            onChange={setOrigin} 
+                            placeholder="Jakarta (JKT)" 
+                        />
+                    </div>
 
-                {/* 3. PERGI (Calendar Custom - Auto Today) */}
-                <CalendarSelector 
-                    label="Pergi"
-                    selectedDate={departureDate}
-                    onChange={setDepartureDate}
-                    minDate={today}
-                />
+                    {/* TOMBOL SWAP */}
+                    <div className="flex justify-center mb-[5px] relative z-10">
+                        <button 
+                            onClick={handleSwap} 
+                            className="p-3 rounded-full bg-gray-50 text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all shadow-sm transform hover:rotate-180"
+                            title="Tukar Lokasi"
+                        >
+                            <FiRefreshCw className="text-lg" />
+                        </button>
+                    </div>
 
-                {/* 4. PULANG (Calendar Custom) */}
-                <div onClick={() => !isRoundTrip && setIsRoundTrip(true)} className="w-full">
-                    <CalendarSelector 
-                        label="Pulang"
-                        selectedDate={returnDate}
-                        onChange={setReturnDate}
-                        minDate={addDays(departureDate, 1)}
-                        disabled={!isRoundTrip}
-                        placeholder="Pilih Tanggal"
-                    />
+                    {/* KE */}
+                    <div className="w-full">
+                        <BoxLabel label="Ke" />
+                        <AirportCombobox 
+                            icon={<FiMapPin className="text-blue-500 text-xl" />} 
+                            airports={airports} 
+                            value={destination} 
+                            onChange={setDestination} 
+                            placeholder="Denpasar (DPS)" 
+                        />
+                    </div>
+
+                    {/* PERGI */}
+                    <div className="w-full">
+                        <BoxLabel label="Pergi" />
+                        <CalendarSelector 
+                            selectedDate={departureDate}
+                            onChange={setDepartureDate}
+                            minDate={today}
+                        />
+                    </div>
+
+                    {/* PULANG */}
+                    <div 
+                        onClick={() => !isRoundTrip && setIsRoundTrip(true)} 
+                        className={`w-full ${!isRoundTrip ? 'cursor-pointer group' : ''}`}
+                    >
+                        <BoxLabel label="Pulang" />
+                        <CalendarSelector 
+                            selectedDate={returnDate}
+                            onChange={setReturnDate}
+                            minDate={addDays(departureDate, 1)}
+                            disabled={!isRoundTrip}
+                            placeholder={!isRoundTrip ? "Pesan Pulang-Pergi" : "Pilih Tanggal"}
+                        />
+                    </div>
+
+                    {/* PENUMPANG & KELAS */}
+                    <div className="w-full">
+                        <BoxLabel label="Penumpang & Kelas" />
+                        <PassengerSelector 
+                            adults={adults} 
+                            children={children} 
+                            infants={infants} 
+                            seatClass={seatClass} 
+                            onUpdate={(a, c, i, s) => { setAdults(a); setChildren(c); setInfants(i); setSeatClass(s); }} 
+                        />
+                    </div>
+
+                    {/* TOMBOL CARI */}
+                    <div className="w-full xl:w-auto">
+                        <button 
+                            onClick={handleSearch}
+                            disabled={loadingData}
+                            className="w-full h-[54px] bg-red-600 text-white px-6 rounded-2xl font-bold text-lg shadow-lg hover:bg-red-700 hover:shadow-red-200 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                            {loadingData ? (
+                                <FiRefreshCw className="animate-spin text-xl" />
+                            ) : (
+                                <>
+                                    <FiSearch className="text-xl" />
+                                    <span className="xl:hidden">Cari Penerbangan</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+
                 </div>
-
-                {/* 5. PENUMPANG */}
-                <PassengerSelector adults={adults} children={children} infants={infants} seatClass={seatClass} onUpdate={(a, c, i, s) => { setAdults(a); setChildren(c); setInfants(i); setSeatClass(s); }} />
-
-                {/* 6. TOMBOL CARI */}
-                <button 
-                    onClick={handleSearch}
-                    disabled={loadingData}
-                    className="h-[72px] bg-red-600 text-white px-8 rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                >
-                    {loadingData ? <FiRefreshCw className="animate-spin text-2xl" /> : <FiSearch className="text-2xl" />}
-                </button>
-
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
-import { FiUsers } from "react-icons/fi";
+import { FiUsers, FiChevronDown } from "react-icons/fi";
 
 interface Props {
   adults: number;
@@ -23,7 +24,6 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- LOGIC VALIDASI PENUMPANG ---
   const handleChange = (type: 'adult' | 'child' | 'infant', operation: 'inc' | 'dec') => {
     let newAdults = adults;
     let newChildren = children;
@@ -33,7 +33,7 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
       if (operation === 'inc') {
         if (newAdults + newChildren < 7) newAdults++;
       } else {
-        if (newAdults > 1 && newAdults > newInfants) newAdults--; // Dewasa min 1 & harus > bayi
+        if (newAdults > 1 && newAdults > newInfants) newAdults--;
       }
     } else if (type === 'child') {
       if (operation === 'inc') {
@@ -43,12 +43,11 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
       }
     } else if (type === 'infant') {
       if (operation === 'inc') {
-        if (newInfants < 4 && newInfants < newAdults) newInfants++; // Bayi max 4 & harus < dewasa
+        if (newInfants < 4 && newInfants < newAdults) newInfants++;
       } else {
         if (newInfants > 0) newInfants--;
       }
     }
-
     onUpdate(newAdults, newChildren, newInfants, seatClass);
   };
 
@@ -58,24 +57,45 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
     { value: 'first_class', label: 'First Class' },
   ];
 
+  const totalPassenger = adults + children + infants;
+  const seatClassLabel = seatClassOptions.find(s => s.value === seatClass)?.label || "Economy";
+
   return (
     <div className="relative w-full" ref={dropdownRef}>
+      
+      {/* TRIGGER BOX */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 bg-gray-100 px-4 py-3 rounded-xl cursor-pointer hover:bg-gray-200 transition h-[72px]"
+        className={`
+            group flex items-center gap-3 w-full h-[54px] px-4 rounded-2xl cursor-pointer transition-all border select-none
+            ${isOpen 
+                ? "bg-white border-red-500 shadow-red-100 ring-2 ring-red-100" 
+                : "bg-gray-50 border-gray-200 hover:bg-white hover:border-gray-300 hover:shadow-sm"
+            }
+        `}
       >
-        <FiUsers className="text-red-500 text-xl flex-shrink-0" />
-        <div className="flex flex-col w-full overflow-hidden">
-           <span className="text-xs text-gray-500 font-semibold uppercase mb-0.5">Penumpang & Kelas</span>
-           <span className="text-sm font-bold text-gray-800 truncate">
-             {adults + children + infants} Penumpang, {seatClassOptions.find(s => s.value === seatClass)?.label}
-           </span>
+        {/* Icon */}
+        <span className={`text-xl transition-colors ${isOpen ? "text-red-500" : "text-gray-400 group-hover:text-red-500"}`}>
+             <FiUsers />
+        </span>
+
+        {/* Value Text - FIXED: Added text-left */}
+        <div className="flex-1 min-w-0 text-left">
+           <p className="text-base font-bold truncate text-gray-900">
+             {totalPassenger}, {seatClassLabel}
+           </p>
         </div>
+
+         {/* Chevron Icon */}
+         <FiChevronDown className={`text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
       </div>
 
+      {/* DROPDOWN CONTENT */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-[320px] bg-white rounded-xl shadow-2xl z-50 p-5 border border-gray-100 ring-1 ring-black ring-opacity-5">
-          <div className="space-y-4 mb-4">
+        <div className="absolute top-full right-0 mt-2 w-[340px] bg-white rounded-2xl shadow-xl z-50 p-5 border border-gray-100 ring-1 ring-black ring-opacity-5 animate-in fade-in zoom-in-95 duration-200">
+          
+          {/* Passenger Counters */}
+          <div className="space-y-5 mb-5">
             <CounterRow 
               label="Dewasa" desc="(12+ tahun)" value={adults} 
               onDec={() => handleChange('adult', 'dec')} onInc={() => handleChange('adult', 'inc')}
@@ -93,19 +113,21 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
             />
           </div>
 
-          <div className="border-t border-gray-100 my-4"></div>
+          <div className="border-t border-gray-100 my-5"></div>
 
+          {/* Seat Class Options */}
           <div className="space-y-3">
-            <p className="text-xs font-bold text-gray-500 uppercase">Kelas Kabin</p>
+            {/* FIXED: Added text-left */}
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Kelas Kabin</p>
             <div className="flex flex-wrap gap-2">
               {seatClassOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => onUpdate(adults, children, infants, opt.value)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold border transition ${
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${
                     seatClass === opt.value
-                      ? 'bg-red-500 text-white border-red-500 shadow-md shadow-red-200'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-red-500 hover:text-red-500'
+                      ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-200'
+                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600 hover:bg-white'
                   }`}
                 >
                   {opt.label}
@@ -114,8 +136,13 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
             </div>
           </div>
           
-          <div className="mt-5 flex justify-end">
-             <button onClick={() => setIsOpen(false)} className="text-red-600 text-sm font-bold hover:bg-red-50 px-4 py-2 rounded-lg transition">Selesai</button>
+          <div className="mt-6 flex justify-end">
+             <button 
+                onClick={() => setIsOpen(false)} 
+                className="text-red-600 text-sm font-bold hover:bg-red-50 px-5 py-2.5 rounded-xl transition-colors"
+             >
+                Selesai
+             </button>
           </div>
         </div>
       )}
@@ -123,21 +150,31 @@ export const PassengerSelector: React.FC<Props> = ({ adults, children, infants, 
   );
 };
 
+// Component Helper untuk Baris Counter
 const CounterRow = ({ label, desc, value, onDec, onInc, disableDec, disableInc }: any) => (
   <div className="flex justify-between items-center">
-    <div>
+    {/* FIXED: Added text-left pada container label */}
+    <div className="text-left">
       <p className="font-bold text-gray-800 text-sm">{label}</p>
-      <p className="text-xs text-gray-400">{desc}</p>
+      <p className="text-xs text-gray-400 font-medium">{desc}</p>
     </div>
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       <button 
         onClick={onDec} disabled={disableDec}
-        className={`w-8 h-8 rounded-full flex items-center justify-center border transition ${disableDec ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'}`}
+        className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
+            disableDec 
+            ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed' 
+            : 'bg-white border-red-200 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 shadow-sm'
+        }`}
       > - </button>
-      <span className="w-4 text-center text-sm font-bold text-gray-800">{value}</span>
+      <span className="w-4 text-center text-base font-bold text-gray-900">{value}</span>
       <button 
         onClick={onInc} disabled={disableInc}
-        className={`w-8 h-8 rounded-full flex items-center justify-center border transition ${disableInc ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white'}`}
+        className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
+            disableInc 
+            ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed' 
+            : 'bg-white border-red-200 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 shadow-sm'
+        }`}
       > + </button>
     </div>
   </div>

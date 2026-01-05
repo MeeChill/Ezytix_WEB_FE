@@ -53,3 +53,27 @@ export interface CreateBookingResponse {
     expiry_date: string;
     bookings: BookingDetailResponse[];
 }
+
+export interface FlightDetail {
+    flight_code: string;
+    airline_name: string;
+    airline_logo: string;
+    origin: string;      // Contoh: "Jakarta (CGK)"
+    destination: string; // Contoh: "Bali (DPS)"
+    departure_time: string; // ISO String (2026-01-01T10:00:00Z)
+    arrival_time: string;
+    duration_minutes: number;
+}
+
+export interface Booking {
+    booking_code: string;
+    status: string;       // 'pending', 'paid', 'cancelled', 'failed'
+    total_amount: string; // Backend mengirim Decimal sebagai string agar presisi
+    created_at: string;
+    
+    // Field Opsional (Tergantung Status)
+    payment_url?: string; // Wajib ada jika status 'pending'
+    expiry_time?: string; // Wajib ada jika status 'pending'
+    
+    flight: FlightDetail;
+}
